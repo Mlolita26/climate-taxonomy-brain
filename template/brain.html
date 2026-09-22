@@ -74,7 +74,6 @@ footer a{color:var(--green)}
 
 <header>
   <h1>Climate Taxonomy Brain</h1>
-  <span class="meta mono" id="metaline"></span>
 </header>
 
 <div class="wrap">
@@ -119,7 +118,6 @@ const SAMPLES  = __SAMPLES__;
 
 const byId = Object.fromEntries(CONCEPTS.map(c => [c.id, c]));
 const STOP = new Set(RULES.stop_words);
-document.getElementById('metaline').textContent = `${META.n_concepts} concepts · ${META.n_synonyms} synonyms`;
 
 // ---------- index: one lookup key per label ----------
 const WORD = /[A-Za-z0-9À-ɏ]+/g;
