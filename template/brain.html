@@ -14,17 +14,9 @@
   --grey-soft:#eef0ef; --grey-line:#b8c0bc;
   --focus:#065F4A;
 }
-@media (prefers-color-scheme: dark){
-  :root{
-    --bg:#0f1513; --card:#161d1a; --ink:#e8ece9; --ink-2:#aab5b0; --ink-3:#7f8b86;
-    --line:#26302c; --line-2:#334039;
-    --green:#4fd9b4; --green-dark:#17F1BD; --green-soft:#12382e; --green-mid:#1f5a48;
-    --amber:#d9a441; --amber-soft:#3d2d0f; --amber-ink:#f1cf85;
-    --grey-soft:#1c2622; --grey-line:#4a5751;
-    --focus:#4fd9b4;
-  }
-}
+/* Deliberately one light theme: white cards, green accents, whatever the viewer's OS setting. */
 *{box-sizing:border-box}
+html{color-scheme:light}
 html,body{margin:0}
 body{background:var(--bg);color:var(--ink);font-family:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;font-size:14px;line-height:1.5;padding:0 20px 28px}
 .mono{font-family:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;font-variant-numeric:tabular-nums}
@@ -43,16 +35,18 @@ button:hover{border-color:var(--green)}
 button:focus-visible,select:focus-visible,textarea:focus-visible,input:focus-visible{outline:2px solid var(--focus);outline-offset:1px}
 
 /* the text box */
-.editor{position:relative;margin:14px 16px 0;border:1.5px solid var(--line-2);border-radius:8px;background:var(--card);transition:border-color .15s}
+.editor{margin:14px 16px 0;border:1.5px solid var(--line-2);border-radius:8px;background:var(--card);transition:border-color .15s}
 .editor:focus-within{border-color:var(--green)}
-.backdrop,textarea#txt{font-family:"IBM Plex Sans",system-ui,sans-serif;font-size:15.5px;line-height:1.75;padding:16px 18px;margin:0;border:0;width:100%;min-height:300px;white-space:pre-wrap;word-wrap:break-word;overflow-wrap:break-word;letter-spacing:normal;border-radius:8px}
-.backdrop{position:absolute;inset:0;color:transparent;pointer-events:none;overflow:hidden}
-textarea#txt{position:relative;display:block;background:transparent;color:var(--ink);caret-color:var(--green);resize:vertical;outline:none}
-mark{color:transparent;border-radius:3px;padding:2px 0}
+textarea#txt{display:block;font-family:"IBM Plex Sans",system-ui,sans-serif;font-size:15px;line-height:1.6;padding:14px 16px;margin:0;border:0;width:100%;min-height:150px;background:transparent;color:var(--ink);caret-color:var(--green);resize:vertical;outline:none;border-radius:8px}
+/* the tagged mirror of the text, updated as you type */
+.tagged-h{display:flex;justify-content:space-between;align-items:baseline;margin:14px 16px 6px;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3);font-weight:600}
+.tagged{margin:0 16px;padding:14px 16px;border:1px solid var(--line);border-radius:8px;background:var(--bg);font-size:15px;line-height:1.9;white-space:pre-wrap;overflow-wrap:break-word;min-height:72px;color:var(--ink)}
+.tagged .hint{color:var(--ink-3);font-style:italic}
+mark{color:inherit;border-radius:3px;padding:2px 3px;margin:0 -1px}
 mark.counts{background:var(--green-soft);box-shadow:inset 0 -2px 0 var(--green)}
-mark.idle{background:var(--grey-soft);box-shadow:inset 0 -2px 0 var(--grey-line)}
+mark.idle{background:var(--grey-soft);box-shadow:inset 0 -2px 0 var(--grey-line);color:var(--ink-2)}
 mark.synonym.counts{background:var(--amber-soft);box-shadow:inset 0 -2px 0 var(--amber)}
-mark.synonym.idle{background:var(--amber-soft);box-shadow:inset 0 -2px 0 var(--amber);opacity:.7}
+mark.synonym.idle{background:var(--amber-soft);box-shadow:inset 0 -2px 0 var(--amber);color:var(--ink-2)}
 
 /* counts under the box */
 .counts{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:14px 16px}
@@ -138,9 +132,10 @@ footer a{color:var(--green)}
       </div>
     </div>
     <div class="editor">
-      <div class="backdrop" id="backdrop" aria-hidden="true"></div>
       <textarea id="txt" spellcheck="false" placeholder="Type a result description, a plan, a paragraph of a report…"></textarea>
     </div>
+    <div class="tagged-h"><span>Tagged text</span><span style="font-weight:400;letter-spacing:0;text-transform:none">updates as you type</span></div>
+    <div class="tagged" id="tagged"></div>
     <div class="counts">
       <div class="count green"><b class="mono" id="n-concepts">0</b><span>taxonomy concepts</span></div>
       <div class="count"><b class="mono" id="n-terms">0</b><span>preferred terms</span></div>
@@ -294,17 +289,19 @@ function score(matches, axis, useProxy){
 
 // ---------- rendering ----------
 const esc = s => s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const txt = document.getElementById('txt'), backdrop = document.getElementById('backdrop');
+const txt = document.getElementById('txt'), tagged = document.getElementById('tagged');
 let current = [], selected = null, lastA = null;
 
-function renderBackdrop(text, matches, countingIds){
+function renderTagged(text, matches, countingIds){
+  if (!text.trim()){ tagged.innerHTML = '<span class="hint">Your text appears here with taxonomy terms marked.</span>'; return; }
   let out = '', pos = 0;
   for (const m of matches){
     out += esc(text.slice(pos, m.s));
-    out += `<mark class="${m.kind} ${countingIds.has(m.id) ? 'counts' : 'idle'}">${esc(text.slice(m.s, m.e))}</mark>`;
+    const c = byId[m.id];
+    out += `<mark class="${m.kind} ${countingIds.has(m.id) ? 'counts' : 'idle'}" title="${esc(c.term)} · ${esc(c.facet)}${m.kind === 'synonym' ? ' · synonym' : ''}">${esc(text.slice(m.s, m.e))}</mark>`;
     pos = m.e;
   }
-  backdrop.innerHTML = out + esc(text.slice(pos)) + '\n';
+  tagged.innerHTML = out + esc(text.slice(pos));
 }
 
 const ELEMENTS = [
@@ -385,7 +382,7 @@ function run(){
   const a = score(current, 'adaptation', useProxy), m = score(current, 'mitigation', useProxy);
   lastA = a;
   const countingIds = new Set([...a.rows.filter(r => r.element), ...m.rows.filter(r => r.element)].map(r => r.c.id));
-  renderBackdrop(text, current, countingIds);
+  renderTagged(text, current, countingIds);
   document.getElementById('n-concepts').textContent = a.rows.length;
   document.getElementById('n-terms').textContent = current.filter(x => x.kind === 'term').length;
   document.getElementById('n-syn').textContent = current.filter(x => x.kind === 'synonym').length;
@@ -395,8 +392,6 @@ function run(){
   if (selected && !current.some(x => x.id === selected)){ selected = null; document.getElementById('detail').hidden = true; }
 }
 let timer; txt.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(run, 120); });
-txt.addEventListener('scroll', () => { backdrop.scrollTop = txt.scrollTop; });
-new ResizeObserver(() => { backdrop.style.height = txt.offsetHeight + 'px'; }).observe(txt);
 document.getElementById('proxy').addEventListener('change', run);
 
 document.getElementById('groups').addEventListener('click', e => {
