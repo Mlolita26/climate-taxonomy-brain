@@ -86,7 +86,7 @@ footer a{color:var(--green)}
     </div>
     <div class="editor">
       <div class="backdrop layer" id="backdrop" aria-hidden="true"></div>
-      <textarea id="txt" class="layer" spellcheck="false" placeholder="Type or paste text"></textarea>
+      <textarea id="txt" class="layer" spellcheck="false" placeholder="Type or paste text here, or load a sample above"></textarea>
     </div>
     <div class="counts">
       <div class="count green"><b class="mono" id="n-terms">0</b><span>taxonomy terms</span></div>
@@ -268,11 +268,14 @@ let timer; txt.addEventListener('input', () => { clearTimeout(timer); timer = se
 document.getElementById('proxy').addEventListener('change', run);
 
 const sel = document.getElementById('sample');
-sel.innerHTML = '<option value="">Load a sample</option>' + SAMPLES.map((s,i) => `<option value="${i}">${esc(s.name)}</option>`).join('');
-sel.addEventListener('change', () => { if (sel.value !== ''){ txt.value = SAMPLES[+sel.value].text; run(); } });
+sel.innerHTML = '<option value="">Type your own text</option>' + SAMPLES.map((s,i) => `<option value="${i}">Sample: ${esc(s.name)}</option>`).join('');
+sel.addEventListener('change', () => {
+  txt.value = sel.value === '' ? '' : SAMPLES[+sel.value].text;   // the first option gives an empty box
+  run(); if (sel.value === '') txt.focus();
+});
 document.getElementById('clear').addEventListener('click', () => { txt.value = ''; sel.value = ''; run(); txt.focus(); });
 
-txt.value = SAMPLES[2].text; sel.value = '2'; run();
+run();   // open with an empty box, ready to type
 </script>
 </body>
 </html>
