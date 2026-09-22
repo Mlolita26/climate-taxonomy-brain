@@ -102,7 +102,7 @@ footer a{color:var(--green)}
       <div class="vsub" id="v-sub"></div>
       <div class="pathway" id="elements"></div>
       <div class="mit" id="mit" hidden></div>
-      <label class="proxy"><input type="checkbox" id="proxy" checked> Count a conditional term when an anchor is in the same sentence</label>
+      <label class="proxy"><input type="checkbox" id="proxy" checked> Count conditional terms when the text names a climate hazard or an adaptation-specific term</label>
     </div>
   </aside>
 </div>
@@ -189,12 +189,9 @@ function score(matches, axis, useProxy){
     }
   }
   propagate();
-  if (useProxy){                              // same-sentence proxy for the model-judged from-text relations
-    const anchors = [...detected.values()].filter(d => isSpecific(d.c));
-    for (const [id, d] of detected){
-      if (qualified.has(id) || !isConditional(d.c)) continue;
-      if (anchors.some(a => [...a.sentences].some(s => d.sentences.has(s)))) qualified.add(id);
-    }
+  if (useProxy){                              // proxy for the model-judged from-text relations: an anchor anywhere in the text
+    const hasAnchor = [...detected.values()].some(d => isSpecific(d.c));
+    if (hasAnchor) for (const [id, d] of detected) if (!qualified.has(id) && isConditional(d.c)) qualified.add(id);
     propagate();
   }
   const elementOf = c => c.group === 'crosscutting' ? (isSpecific(c) ? 'rationale' : null) : (RULES.element_of[c.group] || null);

@@ -17,8 +17,8 @@ describes a complete impact pathway.
 4. **Apply the pathway rule.** Each tagged concept belongs to one pathway element: rationale,
    intervention, system/who, result. A term that is *adaptation-specific* (drought, drip
    irrigation) counts on its own. A term that is *adaptation-conditional* (maize, farmer, yield)
-   counts only if it is linked to a specific term, through a relation stored in the taxonomy
-   or, if the box is ticked, because a specific term is in the same sentence.
+   counts only if it is linked to a specific term: through a relation stored in the taxonomy,
+   or, if the box is ticked, because the text names a specific term somewhere.
 5. **Count the elements.** Four elements evidenced: Full. Three or two: Partial. One: Minimal.
    None: None. So "fertilizer to raise maize yields" tags six concepts but scores None, because
    none of them is linked to a climate hazard.
