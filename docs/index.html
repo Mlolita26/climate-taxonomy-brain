@@ -59,8 +59,7 @@ textarea#txt{position:relative;display:block;min-height:150px;background:transpa
 .chev{position:relative;height:40px;display:flex;align-items:center;justify-content:center;font-size:12.5px;font-weight:600;color:#fff;background:var(--green);
   clip-path:polygon(0 0,calc(100% - 14px) 0,100% 50%,calc(100% - 14px) 100%,0 100%,14px 50%);margin-right:-8px;padding:0 16px 0 22px;text-align:center;line-height:1.15}
 .chev:first-child{clip-path:polygon(0 0,calc(100% - 14px) 0,100% 50%,calc(100% - 14px) 100%,0 100%);padding-left:14px}
-.chev.off{background:var(--grey-soft);color:var(--ink-3)}
-.chev.miss{background:var(--amber-soft);color:var(--amber-ink)}
+.chev.off{background:var(--green-soft);color:var(--green)}   /* not evidenced: pale green, so amber stays reserved for synonyms */
 .found{font-size:11.5px;line-height:1.4;color:var(--ink-2);padding:4px 10px 0 6px;border-left:2px solid var(--green-mid);margin:0 8px 0 6px}
 .found.off{color:var(--ink-3);border-left-color:var(--line)}
 @media (max-width:560px){.pathway{grid-template-columns:repeat(2,1fr);gap:10px 8px}.chev{margin-right:0}}
@@ -240,7 +239,7 @@ function renderPathway(a, m){
   document.getElementById('v-sub').textContent = a.count === 4 ? 'Complete: all four pathway elements are evidenced.'
     : a.count === 0 ? 'No term passes the adaptation test.'
     : `${a.count} of 4 elements. Missing: ${missing.join(', ')}.`;
-  const chevrons = ELEMENTS.map(e => `<div class="chev ${a.present.includes(e.key) ? '' : (a.count ? 'miss' : 'off')}">${e.name}</div>`).join('');
+  const chevrons = ELEMENTS.map(e => `<div class="chev ${a.present.includes(e.key) ? '' : 'off'}">${e.name}</div>`).join('');
   const boxes = ELEMENTS.map(e => {
     const filled = a.rows.filter(r => r.element === e.key).map(r => r.c.term);
     return `<div class="found ${filled.length ? '' : 'off'}">${filled.length ? esc(filled.join(', ')) : 'not evidenced'}</div>`;
