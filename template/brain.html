@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Climate Taxonomy Brain</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --bg:#f6f5f2; --panel:#ffffff; --ink:#0d1a15; --ink-2:#4a5a54; --ink-3:#7d8a85;
+  --line:#e2e0df; --line-2:#cfd5d2;
+  --green-900:#033529; --green-700:#065F4A; --mint:#17F1BD;
+  --term-bg:#d9f7ee; --term-line:#0b8a6c;
+  --syn-bg:#fdebc8; --syn-line:#b7791f; --syn-ink:#7a4f0a;
+  --cond-line:#8fb8ab;
+  --tile-off:#eeece8; --tile-on:#d9f7ee; --tile-warn:#fdebc8;
+  --btn-ink:#ffffff;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0f1513; --panel:#161d1a; --ink:#e8ece9; --ink-2:#aab5b0; --ink-3:#7f8b86;
+    --line:#26302c; --line-2:#334039;
+    --green-900:#17F1BD; --green-700:#4fd9b4;
+    --term-bg:#12382e; --term-line:#3cc39e;
+    --syn-bg:#3d2d0f; --syn-line:#d9a441; --syn-ink:#f1cf85;
+    --cond-line:#3f6a5c;
+    --tile-off:#1c2622; --tile-on:#12382e; --tile-warn:#3d2d0f;
+    --btn-ink:#0d1a15;
+  }
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;font-size:14px;line-height:1.5;padding:0 20px 24px}
+.mono{font-family:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;font-variant-numeric:tabular-nums}
+header{display:flex;align-items:baseline;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:18px 0 12px;border-bottom:2px solid var(--green-900)}
+header h1{font-size:20px;font-weight:600;margin:0;letter-spacing:-.01em}
+header h1 span{color:var(--green-700);font-weight:500}
+.meta{color:var(--ink-3);font-size:12px}
+.wrap{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:20px;margin-top:16px}
+@media (max-width:900px){.wrap{grid-template-columns:1fr}}
+.pane{background:var(--panel);border:1px solid var(--line);border-radius:6px;min-width:0}
+.pane-h{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 14px;border-bottom:1px solid var(--line)}
+.pane-h h2{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-2);margin:0;font-weight:600}
+.controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+select,button{font:inherit;font-size:13px;color:var(--ink);background:var(--panel);border:1px solid var(--line-2);border-radius:4px;padding:5px 9px;cursor:pointer}
+button:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--green-700);outline-offset:1px}
+.editor{position:relative;min-height:320px}
+.backdrop,textarea#txt{font-family:"IBM Plex Sans",system-ui,sans-serif;font-size:15px;line-height:1.7;padding:16px;margin:0;border:0;width:100%;min-height:320px;white-space:pre-wrap;word-wrap:break-word;overflow-wrap:break-word;letter-spacing:normal}
+.backdrop{position:absolute;inset:0;color:transparent;pointer-events:none;overflow:hidden}
+textarea#txt{position:relative;display:block;background:transparent;color:var(--ink);caret-color:var(--green-700);resize:vertical;outline:none}
+mark{color:transparent;border-radius:2px;padding:1px 0}
+mark.term{background:var(--term-bg);box-shadow:inset 0 -2px 0 var(--term-line)}
+mark.synonym{background:var(--syn-bg);box-shadow:inset 0 -2px 0 var(--syn-line)}
+mark.cond{box-shadow:inset 0 -2px 0 var(--cond-line)}
+mark.cond.synonym{box-shadow:inset 0 -2px 0 var(--syn-line)}
+.legend{display:flex;gap:14px;flex-wrap:wrap;padding:8px 14px;border-top:1px solid var(--line);color:var(--ink-2);font-size:12px}
+.legend i{display:inline-block;width:14px;height:12px;border-radius:2px;vertical-align:-2px;margin-right:5px}
+.legend .l-term{background:var(--term-bg);box-shadow:inset 0 -2px 0 var(--term-line)}
+.legend .l-syn{background:var(--syn-bg);box-shadow:inset 0 -2px 0 var(--syn-line)}
+.legend .l-cond{background:var(--term-bg);box-shadow:inset 0 -2px 0 var(--cond-line)}
+.stats{display:flex;gap:18px;padding:12px 14px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.stat{display:flex;flex-direction:column}
+.stat b{font-size:22px;font-weight:500;line-height:1.1}
+.stat span{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3)}
+.stat.syn b{color:var(--syn-ink)}
+.elements{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:12px 14px;border-bottom:1px solid var(--line)}
+@media (max-width:520px){.elements{grid-template-columns:repeat(2,1fr)}}
+.tile{background:var(--tile-off);border-radius:4px;padding:8px 10px;min-height:56px;border-left:3px solid var(--line-2)}
+.tile.on{background:var(--tile-on);border-left-color:var(--term-line)}
+.tile.warn{background:var(--tile-warn);border-left-color:var(--syn-line)}
+.tile b{display:block;font-size:12px;font-weight:600}
+.tile small{display:block;color:var(--ink-2);font-size:11px;line-height:1.35;margin-top:2px}
+.elements-cap{padding:0 14px 8px;color:var(--ink-3);font-size:11px;border-bottom:1px solid var(--line)}
+.groups{padding:6px 0;max-height:520px;overflow:auto}
+.group h3{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3);margin:10px 14px 4px;font-weight:600}
+.item{display:grid;grid-template-columns:1fr auto;gap:4px 10px;padding:8px 14px;border-top:1px solid var(--line);cursor:pointer;align-items:start}
+.item:hover,.item.sel{background:var(--bg)}
+.item .lab{font-weight:500}
+.item .lab .id{color:var(--ink-3);font-size:11px;margin-left:6px}
+.item .facet{font-size:11px;color:var(--ink-2)}
+.chip{display:inline-block;font-size:11px;padding:1px 7px;border-radius:10px;border:1px solid var(--line-2);color:var(--ink-2);white-space:nowrap}
+.chip.spec{border-color:var(--term-line);color:var(--green-700)}
+.chip.cnt{border-color:var(--cond-line)}
+.synrow{grid-column:1/-1;display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:12px;color:var(--syn-ink)}
+.synrow em{font-style:normal;background:var(--syn-bg);padding:0 4px;border-radius:2px}
+.synrow button{font-size:11px;padding:2px 8px}
+.detail{border-top:2px solid var(--green-900);padding:12px 14px;font-size:13px}
+.detail h4{margin:0 0 4px;font-size:15px;font-weight:600}
+.detail .src{color:var(--ink-3);font-size:11px;margin-bottom:8px}
+.detail p{margin:0 0 8px;max-width:65ch}
+.detail dl{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:0}
+.detail dt{color:var(--ink-3);font-size:11px;text-transform:uppercase;letter-spacing:.06em;padding-top:2px}
+.detail dd{margin:0}
+.rel{display:inline-block;margin:0 6px 4px 0;font-size:12px}
+.rel .k{color:var(--green-700);font-family:"IBM Plex Mono",monospace;font-size:11px}
+.empty{padding:28px 14px;color:var(--ink-3);text-align:center}
+footer{margin-top:18px;color:var(--ink-3);font-size:12px;max-width:90ch;line-height:1.55}
+footer b{color:var(--ink-2);font-weight:600}
+footer a{color:var(--green-700)}
+@media (prefers-reduced-motion:no-preference){.tile,.item{transition:background .15s}}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Climate Taxonomy Brain <span>· prototype</span></h1>
+  <div class="meta">Reads the climate adaptation taxonomy and tags text as you write. <span class="mono" id="metaline"></span></div>
+</header>
+
+<div class="wrap">
+  <section class="pane">
+    <div class="pane-h">
+      <h2>Your text</h2>
+      <div class="controls">
+        <label for="sample" class="meta">Load</label>
+        <select id="sample"></select>
+        <button id="clear">Clear</button>
+      </div>
+    </div>
+    <div class="editor">
+      <div class="backdrop" id="backdrop" aria-hidden="true"></div>
+      <textarea id="txt" spellcheck="false" placeholder="Type or paste a result description, a plan, a paragraph of a report…"></textarea>
+    </div>
+    <div class="legend">
+      <span><i class="l-term"></i>Preferred term</span>
+      <span><i class="l-syn"></i>Synonym — the concept is here, with a different word</span>
+      <span><i class="l-cond"></i>Lighter underline: counts as adaptation only under a condition</span>
+    </div>
+  </section>
+
+  <aside class="pane">
+    <div class="stats">
+      <div class="stat"><b class="mono" id="n-concepts">0</b><span>concepts found</span></div>
+      <div class="stat"><b class="mono" id="n-terms">0</b><span>preferred terms</span></div>
+      <div class="stat syn"><b class="mono" id="n-syn">0</b><span>synonyms used</span></div>
+      <div class="stat"><b class="mono" id="n-spec">0</b><span>adaptation-specific</span></div>
+    </div>
+    <div class="elements" id="elements"></div>
+    <div class="elements-cap">Pathway elements present in the text. Indicative only: the full decision rule also checks conditions and counts elements.</div>
+    <div class="groups" id="groups"></div>
+    <div class="detail" id="detail" hidden></div>
+  </aside>
+</div>
+
+<footer>
+  <b>What this is.</b> Tier 1 of the "taxonomy brain": the taxonomy as data, matched against text on labels and synonyms (plural-insensitive, hyphen-insensitive, longest match first), with five deterministic homonym guards from the v5 tagging set. No AI step: the model check that a term is really meant in context, and the discovery of words that match nothing, are the next tier and already run in the PRMS tagging pipeline. Data: <span id="footmeta"></span>. Built by <a href="https://github.com/Mlolita26/climate-taxonomy-brain">build_brain.R</a>; swap the JSON for another taxonomy and the page works unchanged.
+</footer>
+
+<script>
+// Data written by build_brain.R. Nothing below needs to change when the taxonomy changes.
+const META     = __META__;
+const CONCEPTS = __CONCEPTS__;
+const LABELS   = __LABELS__;
+const GUARDS   = __GUARDS__.map(g => ({id: g.id, re: new RegExp(g.pattern, 'i')}));
+const SAMPLES  = __SAMPLES__;
+
+const byId = Object.fromEntries(CONCEPTS.map(c => [c.id, c]));
+document.getElementById('metaline').textContent = `v5 · ${META.n_concepts} concepts · ${META.n_synonyms} synonyms · ${META.n_relations} typed relations`;
+document.getElementById('footmeta').textContent = `${META.schema}, built ${META.built_at.slice(0,10)} by ${META.builder}; page built ${META.page_built}`;
+
+// ---------- index: one lookup key per label ----------
+const WORD = /[A-Za-z0-9À-ɏ]+/g;
+function normWord(w){                       // lower-case, crude singular
+  w = w.toLowerCase();
+  if (w.length > 3){
+    if (w.endsWith('ies')) return w.slice(0,-3)+'y';
+    if (w.endsWith('s') && !w.endsWith('ss')) return w.slice(0,-1);
+  }
+  return w;
+}
+const keyOf = label => (label.match(WORD) || []).map(normWord).join(' ');
+const index = new Map();                    // normalised phrase -> {id, kind, label}
+const acronyms = new Map();                 // exact acronym    -> {id, kind, label}
+let maxWords = 1;
+for (const l of LABELS){
+  const label = l.label.trim();
+  if (/^[A-Z][A-Z0-9]{1,5}$/.test(label)){ if (!acronyms.has(label)) acronyms.set(label, l); continue; }
+  const k = keyOf(label);
+  if (k.length < 3) continue;
+  maxWords = Math.max(maxWords, k.split(' ').length);
+  const prev = index.get(k);
+  if (!prev || (prev.kind === 'synonym' && l.kind === 'term')) index.set(k, l);   // preferred term wins
+}
+
+// ---------- matching: longest phrase first, then homonym guards ----------
+function analyze(text){
+  const toks = []; let m; WORD.lastIndex = 0;
+  while ((m = WORD.exec(text)) !== null) toks.push({s:m.index, e:m.index+m[0].length, raw:m[0], n:normWord(m[0])});
+  const matches = [];
+  for (let i = 0; i < toks.length;){
+    let hit = acronyms.get(toks[i].raw) || null, span = 1;
+    if (!hit) for (let n = Math.min(maxWords, toks.length - i); n >= 1; n--){
+      const k = toks.slice(i, i+n).map(t => t.n).join(' ');
+      const e = index.get(k);
+      if (e && (n > 1 || k.length >= 4)){ hit = e; span = n; break; }
+    }
+    if (!hit){ i++; continue; }
+    const s = toks[i].s, e = toks[i+span-1].e;
+    const context = text.slice(Math.max(0, s-80), Math.min(text.length, e+80));
+    const guard = GUARDS.find(g => g.id === hit.id);
+    if (!(guard && guard.re.test(context))) matches.push({s, e, id:hit.id, kind:hit.kind, found:text.slice(s,e)});
+    i += span;
+  }
+  return matches;
+}
+
+// ---------- rendering ----------
+const esc = s => s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const txt = document.getElementById('txt'), backdrop = document.getElementById('backdrop');
+let current = [], selected = null;
+
+function renderBackdrop(text, matches){
+  let out = '', pos = 0;
+  for (const m of matches){
+    out += esc(text.slice(pos, m.s));
+    const cls = m.kind + (byId[m.id].adaptation === 'Adaptation-conditional' ? ' cond' : '');
+    out += `<mark class="${cls}">${esc(text.slice(m.s, m.e))}</mark>`;
+    pos = m.e;
+  }
+  backdrop.innerHTML = out + esc(text.slice(pos)) + '\n';
+}
+
+const STAGES = [
+  {title:'Rationale · climate risk & drivers', test:c => c.stage === 'Rationale'},
+  {title:'Intervention',                       test:c => c.stage === 'Intervention'},
+  {title:'System & stakeholders',              test:c => c.stage === 'Stakeholder' || c.facet === 'System'},
+  {title:'Output · outcome · impact',          test:c => ['Output','Outcome','Impact','Uptake stage'].includes(c.stage) && c.facet !== 'System'},
+  {title:'Cross-cutting',                      test:c => c.stage === 'Cross-cutting' || c.facet === 'Cross-cutting concept'},
+];
+
+function renderPanel(matches){
+  const found = new Map();
+  for (const m of matches){ if (!found.has(m.id)) found.set(m.id, {c: byId[m.id], hits: []}); found.get(m.id).hits.push(m); }
+  const concepts = [...found.values()];
+  document.getElementById('n-concepts').textContent = concepts.length;
+  document.getElementById('n-terms').textContent = matches.filter(m => m.kind === 'term').length;
+  document.getElementById('n-syn').textContent = matches.filter(m => m.kind === 'synonym').length;
+  document.getElementById('n-spec').textContent = concepts.filter(x => x.c.adaptation === 'Adaptation-specific').length;
+
+  const hazard  = concepts.some(x => x.c.is_hazard || (x.c.stage === 'Rationale' && x.c.adaptation === 'Adaptation-specific'));
+  const riskAny = concepts.some(x => x.c.stage === 'Rationale');
+  const interv  = concepts.some(x => x.c.stage === 'Intervention');
+  const who     = concepts.some(x => x.c.stage === 'Stakeholder' || x.c.facet === 'System');
+  const result  = concepts.some(x => ['Output','Outcome','Impact'].includes(x.c.stage) && x.c.facet !== 'System');
+  const tiles = [
+    {on:hazard, warn:!hazard && (interv || result), b:'Hazard / rationale', small: hazard ? 'A climate hazard or driver is named.' : (riskAny ? 'Risk vocabulary present, but no named hazard.' : 'No climate hazard named. Adaptation-conditional terms stay grey until one is.')},
+    {on:interv, b:'Intervention', small: interv ? 'What was done is named.' : 'No intervention named.'},
+    {on:who,    b:'System / who', small: who ? 'A system or stakeholder is named.' : 'No system or beneficiary named.'},
+    {on:result, b:'Result',       small: result ? 'An output, outcome or impact is named.' : 'No result named.'},
+  ];
+  document.getElementById('elements').innerHTML = tiles.map(t => `<div class="tile ${t.on ? 'on' : (t.warn ? 'warn' : '')}"><b>${t.b}</b><small>${t.small}</small></div>`).join('');
+
+  const groups = document.getElementById('groups');
+  if (!concepts.length){ groups.innerHTML = '<div class="empty">Nothing from the taxonomy yet. Start writing, or load a sample.</div>'; return; }
+  let html = '';
+  for (const st of STAGES){
+    const rows = concepts.filter(x => st.test(x.c));
+    if (!rows.length) continue;
+    html += `<div class="group"><h3>${st.title}</h3>`;
+    for (const x of rows){
+      const c = x.c;
+      const chip = c.adaptation === 'Adaptation-specific' ? '<span class="chip spec">adaptation-specific</span>'
+                 : c.adaptation === 'Adaptation-conditional' ? '<span class="chip cnt">conditional</span>' : '<span class="chip">mitigation</span>';
+      html += `<div class="item ${selected===c.id?'sel':''}" data-id="${c.id}">
+        <div class="lab">${esc(c.term)}<span class="id mono">${c.id}</span><div class="facet">${esc(c.facet)}${x.hits.length>1?` · ${x.hits.length}×`:''}</div></div><div>${chip}</div>`;
+      const seen = new Set();
+      for (const h of x.hits.filter(h => h.kind === 'synonym')){
+        const k = h.found.toLowerCase(); if (seen.has(k)) continue; seen.add(k);
+        html += `<div class="synrow">Written as <em>${esc(h.found)}</em> → agreed term <b>${esc(c.term)}</b> <button data-replace="${c.id}" data-from="${esc(h.found)}">Use preferred term</button></div>`;
+      }
+      html += '</div>';
+    }
+    html += '</div>';
+  }
+  groups.innerHTML = html;
+}
+
+function renderDetail(id){
+  const c = byId[id], box = document.getElementById('detail');
+  if (!c){ box.hidden = true; return; }
+  const parent = c.parent_id && byId[c.parent_id] ? `${esc(byId[c.parent_id].term)} <span class="mono" style="color:var(--ink-3);font-size:11px">${c.parent_id}</span>` : '—';
+  const rels = c.relations.length ? c.relations.map(r => `<span class="rel"><span class="k">${esc(r.type)}</span> → ${esc(byId[r.target] ? byId[r.target].term : r.target)}</span>`).join('') : '—';
+  const cond = c.adaptation === 'Adaptation-conditional' ? `<dt>Counts when</dt><dd>${esc(c.condition)}</dd>` : (c.adaptation === 'Adaptation-specific' ? '<dt>Counts</dt><dd>Always: adaptation-specific.</dd>' : '');
+  box.innerHTML = `<h4>${esc(c.term)} <span class="mono" style="color:var(--ink-3);font-size:12px;font-weight:400">${c.id}</span></h4>
+    <div class="src">${esc(c.facet)} · ${esc(c.stage)} · source: ${esc(c.provenance || 'n/a')}${c.definition_source ? ' · definition: ' + esc(c.definition_source) : ''}</div>
+    <p>${esc(c.definition || 'No definition recorded.')}</p>
+    <dl><dt>Synonyms</dt><dd>${c.synonyms.length ? esc(c.synonyms.join(', ')) : '—'}</dd>
+    <dt>Parent</dt><dd>${parent}</dd><dt>Relations</dt><dd>${rels}</dd>${cond}</dl>`;
+  box.hidden = false;
+}
+
+function run(){
+  const text = txt.value;
+  current = analyze(text);
+  renderBackdrop(text, current);
+  renderPanel(current);
+  if (selected && !current.some(m => m.id === selected)){ selected = null; document.getElementById('detail').hidden = true; }
+}
+let timer; txt.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(run, 120); });
+txt.addEventListener('scroll', () => { backdrop.scrollTop = txt.scrollTop; });
+new ResizeObserver(() => { backdrop.style.height = txt.offsetHeight + 'px'; }).observe(txt);
+
+document.getElementById('groups').addEventListener('click', e => {
+  const btn = e.target.closest('button[data-replace]');
+  if (btn){
+    const c = byId[btn.dataset.replace], from = btn.dataset.from;
+    const re = new RegExp(from.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+    const keepCase = from[0] === from[0].toUpperCase();
+    txt.value = txt.value.replace(re, keepCase ? c.term : c.term.charAt(0).toLowerCase() + c.term.slice(1));
+    run(); return;
+  }
+  const item = e.target.closest('.item');
+  if (item){ selected = item.dataset.id; renderPanel(current); renderDetail(selected); }
+});
+
+const sel = document.getElementById('sample');
+sel.innerHTML = '<option value="">— sample text —</option>' + SAMPLES.map((s,i) => `<option value="${i}">${esc(s.name)}</option>`).join('');
+sel.addEventListener('change', () => { if (sel.value !== ''){ txt.value = SAMPLES[+sel.value].text; run(); } });
+document.getElementById('clear').addEventListener('click', () => { txt.value = ''; sel.value = ''; run(); txt.focus(); });
+
+txt.value = SAMPLES[0].text; sel.value = '0'; run();   // open in a working state
+</script>
+</body>
+</html>
