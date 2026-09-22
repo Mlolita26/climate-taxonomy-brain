@@ -1,64 +1,37 @@
 # Climate Taxonomy Brain
 
-A one-page prototype: paste or type any text and see which words come from the
-CGIAR climate adaptation taxonomy, which are synonyms of an agreed term, and whether
-the text evidences a complete impact pathway, using the same element-count rule as
-the PRMS tagging pipeline.
+Type or paste a text. The page marks the words that are in the CGIAR climate adaptation
+taxonomy, tells you which ones are synonyms of an agreed term, and shows whether the text
+describes a complete impact pathway.
 
 **Live page:** https://mlolita26.github.io/climate-taxonomy-brain/
 
-## How it works
+## How it works, in plain words
 
-Everything about the taxonomy and the rule parameters lives in R; the page's
-JavaScript only does the matching and counting in the browser and never needs to
-change when the data changes.
+1. **A lookup list.** For every concept in the taxonomy, take its preferred term and all its
+   synonyms. About 1,700 phrases, each pointing to one concept.
+2. **Read the text.** Words are put in a simple form: lower case, no plural, hyphens as spaces.
+   So "cropping systems" and "cropping-system" both match "Crop system".
+3. **Find the longest match.** At each word, the page looks for the longest phrase that is in
+   the list. Found phrases are marked: green if the preferred term was used, amber if a synonym.
+4. **Apply the pathway rule.** Each tagged concept belongs to one pathway element: rationale,
+   intervention, system/who, result. A term that is *adaptation-specific* (drought, drip
+   irrigation) counts on its own. A term that is *adaptation-conditional* (maize, farmer, yield)
+   counts only if it is linked to a specific term, through a relation stored in the taxonomy
+   or, if the box is ticked, because a specific term is in the same sentence.
+5. **Count the elements.** Four elements evidenced: Full. Three or two: Partial. One: Minimal.
+   None: None. So "fertilizer to raise maize yields" tags six concepts but scores None, because
+   none of them is linked to a climate hazard.
+
+There is no AI in the page. The AI step, checking that a word really means the concept in its
+context, is what the PRMS tagging pipeline adds on top.
+
+## Files
 
 | File | What it is |
 | --- | --- |
-| `build_brain.R` | The script. Reads the taxonomy, tidies it with dplyr, holds the rule parameters, writes the page. |
-| `data/taxonomy_v5.json` | The climate adaptation taxonomy, version 5 (739 concepts, built 2026-09-04). |
-| `template/brain.html` | The page layout, the matching code and the verdict engine, with placeholders for the data. |
-| `docs/index.html` | The built page. GitHub Pages serves this folder. |
-| `test_rule.js` | Runs the matcher and the rule on the built-in samples from the command line (`node test_rule.js`). |
-
-## The rule
-
-Mirrors `derive_verdicts()` in `PRMS_Tagging_v5.Rmd` and the decision-rule files:
-
-1. An **adaptation-specific** term counts on its own (an anchor: drought, drip irrigation,
-   early warning system).
-2. An **adaptation-conditional** term (maize, farmer, yield) counts only through a qualifying
-   relation to an anchor. The page checks the relations stored in the taxonomy first
-   (`addresses`, `produces`, `applies-to`, ...). For the relations the pipeline's model reads
-   from the text (`attributed-to`, `exposed-to`, `benefits-from`, `engaged-in`) the page uses a
-   labelled proxy: the anchor appears in the same sentence. The proxy can be switched off.
-3. Each counting term fills one pathway element: rationale, intervention, system/stakeholder,
-   result. Cross-cutting concepts fill rationale only when specific; adoption terms fill nothing.
-4. Distinct elements give the verdict: 4 Full (1.00), 3 Partial (0.75), 2 Partial (0.50),
-   1 Minimal (0.25), 0 None. The mitigation axis runs in parallel with its own relations.
-
-The rule's canonical example holds: "distributing fertilizer to raise maize yields" detects
-six taxonomy terms and scores **None**, because none is linked to a hazard.
-
-## Rebuild the page
-
-```
-Rscript build_brain.R
-```
-
-Needs R with `dplyr`, `purrr`, `tidyr`, `stringr`, `jsonlite`, `readr`.
-Commit `docs/index.html` and the live page updates.
-
-## Use it for another taxonomy
-
-Replace `data/taxonomy_v5.json` with a file that has, for each concept, an `id`,
-a `term`, `synonyms`, a `facet` and a `definition`, adjust the column list at the
-top of `build_brain.R`, and rebuild. The matching is generic: labels and synonyms,
-plural- and hyphen-insensitive, longest phrase first.
-
-## What it does not do (yet)
-
-This is tier 1: the taxonomy as data, matched on words. It does not check with a
-model that a matched term is really meant in context, and it does not surface
-words that match nothing as candidate new terms. Both already run in the PRMS
-tagging pipeline of the Climate Adaptation Activator and are the next tier.
+| `build_brain.R` | Reads the taxonomy, prepares the data and the rule parameters, writes the page. Run with `Rscript build_brain.R`. |
+| `data/taxonomy_v5.json` | The taxonomy (739 concepts). Replace it to use another taxonomy. |
+| `template/brain.html` | The page layout and the matching and counting code. |
+| `docs/index.html` | The built page, served by GitHub Pages. |
+| `test_rule.js` | Runs the samples from the command line: `node test_rule.js`. |
