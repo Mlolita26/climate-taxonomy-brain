@@ -35,3 +35,9 @@ context, is what the PRMS tagging pipeline adds on top.
 | `template/brain.html` | The page layout and the matching and counting code. |
 | `docs/index.html` | The built page, served by GitHub Pages. |
 | `test_rule.js` | Runs the samples from the command line: `node test_rule.js`. |
+
+## Data source
+
+The taxonomy this page reads is published as a FAIR vocabulary (SKOS) at
+https://mlolita26.github.io/cgiar-climate-taxonomy/ (repository: Mlolita26/cgiar-climate-taxonomy).
+This page still embeds its own copy of `taxonomy_v5.json`; reading the published JSON-LD directly is the next step.
